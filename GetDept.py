@@ -4,6 +4,7 @@ import os
 import sys
 import re
 from datetime import datetime
+import time
 
 # p GetDept.py FOP w
 
@@ -63,7 +64,7 @@ print("From: {}".format(stopp))
 # Print the departures to the console
 # http://reisapi.ruter.no/StopVisit/GetDepartures/3010370
 
-t = PrettyTable(["Line", "Destination", "Time", "Carriages"])
+t = PrettyTable(["Line", "Destination", "Real Time", "Time", "Carriages"])
 counter = 0
 
 for i in range(defaultTimeTableLength):
@@ -85,7 +86,15 @@ for i in range(defaultTimeTableLength):
     line = (deptInfo[counter]['MonitoredVehicleJourney']['LineRef'])
     expTime = (deptInfo[counter]['MonitoredVehicleJourney']['MonitoredCall']['ExpectedDepartureTime'])
     inDate = expTime
-    timeSimple = re.sub(r"\d\d\d\d-\d\d-\d\dT(\d\d:\d\d:\d\d)\+\d\d:\d\d", r"\1", inDate)
+    timeForTable = re.sub(r"\d\d\d\d-\d\d-\d\dT(\d\d:\d\d:\d\d)\+\d\d:\d\d", r"\1", inDate)
+
+    realTimeSub = re.sub(r"(\d\d\d\d-\d\d-\d\d)T(\d\d:\d\d:\d\d)\+\d\d:\d\d", r"\1 \2", inDate)
+    format = '%Y-%m-%d %H:%M:%S'
+    deptTime = datetime.strptime(realTimeSub, format)
+    nowTime = datetime.now()
+    diff = deptTime - nowTime
+    sanntid = re.sub(r"\d\:(\d\d\:\d\d)\.(?:\d+)", r"\1", str(diff))
+
     #11:09:01
     carriages = (deptInfo[counter]['MonitoredVehicleJourney']['TrainBlockPart']['NumberOfBlockParts'])
     carriagesText = "🚃  🚃"
@@ -94,7 +103,7 @@ for i in range(defaultTimeTableLength):
     elif carriages == "3":
         carriagesText = "🚃  "
 
-    t.add_row([line, dest, timeSimple, carriagesText])
+    t.add_row([line, dest, sanntid ,timeForTable, carriagesText])
     counter += 1
 
 t.align["Destination"] = "l"
