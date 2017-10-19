@@ -25,6 +25,10 @@ if (len(sys.argv) >= 2):
                 dept = item["ID"]
                 stopp = item["Name"]
                 stationFound = True
+            if item["Name"].lower() == arg1:
+                dept = item["ID"]
+                stopp = item["Name"]
+                stationFound = True
         except KeyError:
                 pass
 else:
