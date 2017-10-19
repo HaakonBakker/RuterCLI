@@ -1,6 +1,8 @@
 # RuterCLI
 Time table from the Ruter API.
 
+![Ruter CLI](https://github.com/HaakonBakker/RuterCLI/blob/master/images/previewImage.png?raw=true "Ruter CLI")
+
 # Usage
 Run with: python3 GetDept.py STATION W/E  
 STATION should be ShortName or Name for the station.
