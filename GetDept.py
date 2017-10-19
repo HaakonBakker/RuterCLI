@@ -5,29 +5,43 @@ import sys
 import re
 from datetime import datetime
 import time
+import json
 
-# p GetDept.py FOP w
 
-# Default departure = Forskningsparken (3010370)
-dept = "3010370"
-stopp = "Forskningsparken"
-direction = "all"
-defaultTimeTableLength = 8
+# Will lookup the file
+startTime = time.time()
+path = os.path.dirname(os.path.realpath(__file__))
+stopPath = path + "/stops.json"
+
+with open(stopPath) as json_data:
+    data = json.load(json_data)
+
+stationFound = False
 if (len(sys.argv) >= 2):
     arg1 = str(sys.argv[1].lower()) # Dept Station
-    # Check for Blindern
-    if arg1 == "bli":
-        dept = "3010360"
-        stopp = "Blindern"
-    if arg1 == "blindern":
-        dept = "3010360"
-        stopp = "Blindern"
-    if arg1 == "nyd":
-        dept = "3012130"
-        stopp = "Nydalen"
-    if arg1 == "nydalen":
-        dept = "3012130"
-        stopp = "Nydalen"
+    for item in data["ArrayOfStop"]["Stop"]:
+        try:
+            if item["ShortName"].lower() == arg1:
+                dept = item["ID"]
+                stopp = item["Name"]
+                stationFound = True
+        except KeyError:
+                pass
+else:
+    print("Usage: python3 GetDept.py STATION (W/E).")
+    sys.exit()
+
+if not stationFound:
+    print(sys.argv[1] + " was not found.")
+    sys.exit()
+
+endTime = time.time()
+
+# Timing the lookup
+#print("Tok: " + str((endTime-startTime)))
+
+direction = "all"
+defaultTimeTableLength = 8
 
 if (len(sys.argv) == 3): #Want to check the direction of the trains
     arg2 = str(sys.argv[2].lower()) # Dept Station
@@ -55,14 +69,8 @@ if not resp.ok:
 
 deptInfo = resp.json()
 
-#print(deptInfo)
-
-# Header = FOP
 # Create a list of Line - Destination - Time
 print("From: {}".format(stopp))
-
-# Print the departures to the console
-# http://reisapi.ruter.no/StopVisit/GetDepartures/3010370
 
 t = PrettyTable(["Line", "Destination", "Real Time", "Time", "Carriages"])
 counter = 0
@@ -96,12 +104,16 @@ for i in range(defaultTimeTableLength):
     sanntid = re.sub(r"\d\:(\d\d\:\d\d)\.(?:\d+)", r"\1", str(diff))
 
     #11:09:01
-    carriages = (deptInfo[counter]['MonitoredVehicleJourney']['TrainBlockPart']['NumberOfBlockParts'])
-    carriagesText = "🚃  🚃"
-    if carriages == "6":
+    try:
+        carriages = (deptInfo[counter]['MonitoredVehicleJourney']['TrainBlockPart']['NumberOfBlockParts'])
         carriagesText = "🚃  🚃"
-    elif carriages == "3":
-        carriagesText = "🚃  "
+        if carriages == "6":
+            carriagesText = "🚃  🚃"
+        elif carriages == "3":
+            carriagesText = "🚃  "
+    except TypeError as e:
+        carriagesText = "--"
+
 
     t.add_row([line, dest, sanntid ,timeForTable, carriagesText])
     counter += 1
